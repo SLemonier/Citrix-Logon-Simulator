@@ -1,5 +1,5 @@
-from cmath import log
 from time import sleep, time
+from cmath import log
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -38,9 +38,9 @@ import logging.config
 
 EventSource = 'Citrix.LogonSimulator'
 username = "marlene.sasseur"
-#password = os.getenv('py_ric_pwd')
+#password = os.getenv('py_pwd')
 password = 'Pssw0rd'
-URL = "https://remote.stevenlemonier.fr"
+URL = "https://stevenlemonier.fr"
 ResourceToTest = "Desktop"
 ScreenshotFile = "Screenshot.bmp" #Full path is required
 TextToFind = "Yep."
@@ -71,9 +71,9 @@ App_Event_ID_ERROR = 12002
 App_Event_Category = 90
 App_Event_Data= b"data"
 
-##################
+##################################################################################################################################
 # Log function
-##################
+##################################################################################################################################
 
 def logevent(message,App_Event_Type,App_Event_ID):
     print(message)
@@ -83,8 +83,126 @@ def logevent(message,App_Event_Type,App_Event_ID):
 
 
 ##################################################################################################################################
-################################# Connect to Gateway and start an instance of ResourceToTest #################################
+################################# Connect to Gateway URL and start an instance of ResourceToTest #################################
 ##################################################################################################################################
+
+def logOnCitrixGateway():
+    #Trying to type login
+    try: 
+        loginfield = driver.find_element(By.ID, "login")
+        loginfield.send_keys(username)
+        passwordfield = driver.find_element(By.ID, "passwd")
+        passwordfield.send_keys(password)
+        loginbutton = driver.find_element(By.ID, "nsg-x1-logon-button")
+        loginbutton.click()
+        logevent("Trying to log in",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+    except:
+        driver.quit()
+        logevent("Cannot find login to %s" % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        sys.exit()
+
+    #Wait for the page to load
+    try: #Check first logon failure
+        loginfailed = EC.presence_of_element_located((By.ID, "access_denied_title"))
+        WebDriverWait(driver, timeout).until(loginfailed)
+        logevent("Failed to log on %s with %s" % (URL, username),win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        driver.quit()
+        sys.exit()
+    except TimeoutException:
+        try: #Try to locate HTML5 receiver button
+            loginfield = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
+            WebDriverWait(driver, timeout).until(loginfield)
+            logevent("HTML5 receiver button was found",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+        except:
+            driver.quit()
+            logevent("Cannot HTML5 receiver button.",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+            sys.exit()
+
+    #Wait for the page to load
+    try:
+        html5receiverbutton = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
+        WebDriverWait(driver, timeout).until(html5receiverbutton)
+        logevent("HTML5 receiver page loaded successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+    except TimeoutException:
+        driver.quit()
+        logevent("Failed to load HTML5 receiver page",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        sys.exit()
+
+    #Validate HTML5 Receiver
+    try:
+        html5receiverbutton = driver.find_element(By.ID, "protocolhandler-welcome-useLightVersionLink")
+        html5receiverbutton.click()
+        logevent("HTML5 receiver selected successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+    except:
+        driver.quit()
+        logevent("Cannot select HTML5 receiver",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        sys.exit()
+
+def logonCitrixStorefront():
+    sys.exit()
+    #Wait for the page to load
+    try:
+        html5receiverbutton = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
+        WebDriverWait(driver, timeout).until(html5receiverbutton)
+        logevent("HTML5 receiver page loaded successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+    except TimeoutException:
+        driver.quit()
+        logevent("Failed to load HTML5 receiver page",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        sys.exit()
+    
+    #Validate HTML5 Receiver
+    try:
+        html5receiverbutton = driver.find_element(By.ID, "protocolhandler-welcome-useLightVersionLink")
+        html5receiverbutton.click()
+        logevent("HTML5 receiver selected successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+    except:
+        driver.quit()
+        logevent("Cannot select HTML5 receiver",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        sys.exit()
+
+
+
+
+
+    try: #Try to locate HTML5 receiver button
+        loginfield = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
+        WebDriverWait(driver, timeout).until(loginfield)
+        logevent("HTML5 receiver button was found",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+    except:
+        driver.quit()
+        logevent("Cannot HTML5 receiver button.",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        sys.exit()
+
+    
+
+
+
+
+    #Trying to type login
+    try: 
+        loginfield = driver.find_element(By.ID, "login")
+        loginfield.send_keys(username)
+        passwordfield = driver.find_element(By.ID, "passwd")
+        passwordfield.send_keys(password)
+        loginbutton = driver.find_element(By.ID, "nsg-x1-logon-button")
+        loginbutton.click()
+        logevent("Trying to log in",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+    except:
+        driver.quit()
+        logevent("Cannot find login to %s" % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        sys.exit()
+
+    #Wait for the page to load
+    try: #Check first logon failure
+        loginfailed = EC.presence_of_element_located((By.ID, "access_denied_title"))
+        WebDriverWait(driver, timeout).until(loginfailed)
+        logevent("Failed to log on %s with %s" % (URL, username),win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        driver.quit()
+        sys.exit()
+    except TimeoutException:
+        sys.exit()
+        
+
 
 logging.info('#####################################################################################################################################')
 logging.info('#####################################################################################################################################')
@@ -112,59 +230,26 @@ driver.get(URL)
 
 #Wait for the page to load
 try:
-    loginfield = EC.presence_of_element_located((By.ID, "login"))
+    loginfield = EC.presence_of_element_located((By.ID, "nsg-x1-logon-button")) #locate login button if it's a Citrix Gateway URL
     WebDriverWait(driver, timeout).until(loginfield)
-    logevent("Login field was found.",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+    logevent("%s is a Gateway URL." % URL,win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+    #Start log on process for Citrix Gateway
+    logOnCitrixGateway()
 except TimeoutException:
-    driver.quit()
-    logevent("Cannot find a login field on the page.",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
-    sys.exit()
+    try:
+        html5receiverbutton = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-installButton")) #locate HTML5 button if it's a Citrix Storefront URL
+        WebDriverWait(driver, timeout).until(html5receiverbutton)
+        logevent("%s is a Storefront URL." % URL,win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+        #Start log on process for Citrix Storefront
+        logonCitrixStorefront()
+    except:
+        driver.quit()
+        logevent("%s is not a Citrix Gateway or Citrix Storefront landing page." % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        sys.exit()
 
-#Trying to type login
-try: 
-    loginfield = driver.find_element(By.ID, "login")
-    loginfield.send_keys(username)
-    passwordfield = driver.find_element(By.ID, "passwd")
-    passwordfield.send_keys(password)
-    loginbutton = driver.find_element(By.ID, "nsg-x1-logon-button")
-    loginbutton.click()
-    logevent("Logged in successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-except:
-    driver.quit()
-    logevent("Cannot log in %s" % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
-    sys.exit()
 
-#Wait for the page to load
-try:
-    loginfield = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
-    WebDriverWait(driver, timeout).until(loginfield)
-    logevent("Login field was found.",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-except TimeoutException:
-    driver.quit()
-    logevent("Cannot find a login field on the page.",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
-    sys.exit()
-
-#Wait for the page to load
-try:
-    html5receiverbutton = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
-    WebDriverWait(driver, timeout).until(html5receiverbutton)
-    logevent("HTML5 receiver page loaded successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-except TimeoutException:
-    driver.quit()
-    logevent("Failed to load HTML5 receiver page",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
-    sys.exit()
-
-#Validate HTML5 Receiver
-try:
-    html5receiverbutton = driver.find_element(By.ID, "protocolhandler-welcome-useLightVersionLink")
-    html5receiverbutton.click()
-    logevent("HTML5 receiver selected successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-except:
-    driver.quit()
-    logevent("Cannot select HTML5 receiver",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
-    sys.exit()
-
-#Wait for the page to load
+#Now logon process is finished, get back to common part
+#Wait for the enumeration page to load
 try:
     xPathtoFind = "//img[@alt='" + ResourceToTest + "']"
     resourcebutton = EC.presence_of_element_located((By.XPATH, xPathtoFind))
