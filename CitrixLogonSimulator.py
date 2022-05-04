@@ -1,3 +1,4 @@
+from cmath import log
 from time import sleep, time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -39,7 +40,7 @@ EventSource = 'Citrix.LogonSimulator'
 username = "marlene.sasseur"
 #password = os.getenv('py_ric_pwd')
 password = 'Pssw0rd'
-Gateway_URL = "https://remote.stevenlemonier.fr"
+URL = "https://remote.stevenlemonier.fr"
 ResourceToTest = "Desktop"
 ScreenshotFile = "Screenshot.bmp" #Full path is required
 TextToFind = "Yep."
@@ -64,12 +65,21 @@ logging.basicConfig(filename=LogFile, encoding='utf-8', level=logging.DEBUG, for
 
 #configure Windows EventLog
 App_Name = EventSource
-App_Event_ID = 12001
+App_Event_ID_SUCCESS = 12000
+App_Event_ID_INFORMATION = 12001
+App_Event_ID_ERROR = 12002
 App_Event_Category = 90
-App_Event_Type = win32evtlog.EVENTLOG_ERROR_TYPE
 App_Event_Data= b"data"
-#App_Event_Str = ["This is an error"]
-#win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, sstrings=App_Event_Str,data=App_Event_Data)
+
+##################
+# Log function
+##################
+
+def logevent(message,App_Event_Type,App_Event_ID):
+    print(message)
+    logging.info(message)
+    App_Event_Str = [message]
+    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
 
 
 ##################################################################################################################################
@@ -80,30 +90,34 @@ logging.info('##################################################################
 logging.info('#####################################################################################################################################')
 logging.info('#####################################################################################################################################')
 
+#First test if URL can be resolved. No need to go further if it doesn't
+try:
+    httpResponse = requests.get(URL)
+    logevent('%s is reachable!' % URL,win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+except:
+    logevent("Cannot reach %s" % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+    sys.exit()
+
 #Create an instance of Firefox
 # driver = webdriver.Firefox(capabilities=firefox_capabilities)
 try:
     driver = webdriver.Firefox()
-    logging.info("Firefox instance started successfully")
+    logevent("Firefox instance started successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
 except:
-    logging.error("Cannot start Firefox")
-    App_Event_Str = ["Cannot start Firefox"]
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("Cannot start Firefox",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
 
 #Navigate to Gateway URL
-driver.get(Gateway_URL)
+driver.get(URL)
 
 #Wait for the page to load
 try:
     loginfield = EC.presence_of_element_located((By.ID, "login"))
     WebDriverWait(driver, timeout).until(loginfield)
-    logging.info("Login field was found.")
+    logevent("Login field was found.",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
 except TimeoutException:
     driver.quit()
-    logging.error("Cannot find a login field on the page.")
-    App_Event_Str = ["Cannot find a login field on the page."] 
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("Cannot find a login field on the page.",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
 
 #Trying to type login
@@ -114,48 +128,40 @@ try:
     passwordfield.send_keys(password)
     loginbutton = driver.find_element(By.ID, "nsg-x1-logon-button")
     loginbutton.click()
-    logging.info("Logged in successfully")
+    logevent("Logged in successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
 except:
     driver.quit()
-    logging.error("Cannot log in %s" % Gateway_URL)
-    App_Event_Str = ["Cannot log in %s" % Gateway_URL] 
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("Cannot log in %s" % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
 
 #Wait for the page to load
 try:
     loginfield = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
     WebDriverWait(driver, timeout).until(loginfield)
-    logging.info("Login field was found.")
+    logevent("Login field was found.",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
 except TimeoutException:
     driver.quit()
-    logging.error("Cannot find a login field on the page.")
-    App_Event_Str = ["Cannot find a login field on the page."] 
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("Cannot find a login field on the page.",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
 
 #Wait for the page to load
 try:
     html5receiverbutton = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
     WebDriverWait(driver, timeout).until(html5receiverbutton)
-    logging.info("HTML5 receiver page loaded successfully")
+    logevent("HTML5 receiver page loaded successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
 except TimeoutException:
     driver.quit()
-    logging.error("Failed to load HTML5 receiver page")
-    App_Event_Str = ["Failed to load HTML5 receiver page"] 
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("Failed to load HTML5 receiver page",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
 
 #Validate HTML5 Receiver
 try:
     html5receiverbutton = driver.find_element(By.ID, "protocolhandler-welcome-useLightVersionLink")
     html5receiverbutton.click()
-    logging.info("HTML5 receiver selected successfully")
+    logevent("HTML5 receiver selected successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
 except:
     driver.quit()
-    logging.error("Cannot select HTML5 receiver")
-    App_Event_Str = ["Cannot select HTML5 receiver"] 
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("Cannot select HTML5 receiver",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
 
 #Wait for the page to load
@@ -163,24 +169,20 @@ try:
     xPathtoFind = "//img[@alt='" + ResourceToTest + "']"
     resourcebutton = EC.presence_of_element_located((By.XPATH, xPathtoFind))
     WebDriverWait(driver, timeout).until(resourcebutton)
-    logging.error("Application enumeration finished successfully")
+    logevent("Application enumeration finished successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
 except TimeoutException:
     driver.quit()
-    logging.error("Failed to load application enumeration")
-    App_Event_Str = ["Failed to load application enumeration"] 
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("Failed to load application enumeration",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
 
 #Start an instance of the resource
 try:
     resourcebutton = driver.find_element(By.XPATH, xPathtoFind)
     resourcebutton.click()
-    logging.info("%s application launched" % ResourceToTest)
+    logevent("%s application launched" % ResourceToTest,win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
 except:
     driver.quit()
-    logging.error("Cannot find %s" % ResourceToTest)
-    App_Event_Str = ["Cannot finr %s" % ResourceToTest] 
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("Cannot find %s" % ResourceToTest,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
 
 
@@ -189,11 +191,16 @@ except:
 ##################################################################################################################################
 
 #Waiting for app/desktop to launch
-sleep(30)
-myScreenShot = pyautogui.screenshot()
-myScreenShot.save(ScreenshotFile)
-logging.info("Took a screenshot successfully")
-driver.quit()
+sleep(60)
+try:
+    myScreenShot = pyautogui.screenshot()
+    myScreenShot.save(ScreenshotFile)
+    logevent("Took a screenshot successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+    driver.quit()
+except:
+    driver.quit()
+    logevent("Cannot take a screenshot",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+    sys.exit()
 
 
 ##################################################################################################################################
@@ -202,25 +209,14 @@ driver.quit()
 
 try:
     OCR = pytesseract.image_to_string(Image.open(ScreenshotFile))
-    logging.info("Processing OCR on screenshot file")
+    logevent("Processing OCR on screenshot file",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
 except:
-    logging.error("OCR processing failed on screenshot file")
-    App_Event_Str = ["OCR processing failed on screenshot file"] 
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("OCR processing failed on screenshot file",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
-
 
 if TextToFind in OCR:
-    print("%s found with OCR. Application launched successfully" % TextToFind)
-    logging.info("%s found with OCR. Application launched successfully" % TextToFind)
-    #Generate successfull Event
-    App_Event_ID = 1200
-    App_Event_Type = win32evtlog.EVENTLOG_INFORMATION_TYPE
-    App_Event_Str = ["%s found with OCR. Application launched successfully" % TextToFind] 
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("%s found with OCR. Application launched successfully" % TextToFind,win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_SUCCESS)
     sys.exit()
 else:
-    logging.error("%s not found. %s Failed to launch" % (TextToFind, ResourceToTest))
-    App_Event_Str = ["%s not found. %s Failed to launch" % (TextToFind, ResourceToTest)] 
-    win32evtlogutil.ReportEvent(App_Name,App_Event_ID, eventCategory= App_Event_Category, eventType=App_Event_Type, strings=App_Event_Str,data=App_Event_Data)
+    logevent("%s not found. %s Failed to launch" % (TextToFind, ResourceToTest),win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
