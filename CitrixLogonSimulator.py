@@ -150,47 +150,40 @@ def logonCitrixStorefront():
         logevent("Cannot select HTML5 receiver",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         sys.exit()
 
-
-
-
-
-    try: #Try to locate HTML5 receiver button
-        loginfield = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
+    #Wait for the logon page to load
+    try:
+        loginfield = EC.presence_of_element_located((By.ID, "username")) #locate login button if it's a Citrix Gateway URL
         WebDriverWait(driver, timeout).until(loginfield)
-        logevent("HTML5 receiver button was found",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
+        logevent("Logon page loaded successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
     except TimeoutException:
         driver.quit()
-        logevent("Cannot HTML5 receiver button.",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        logevent("Cannot load logon page",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         sys.exit()
-
-    
-
-
-
-
+ 
     #Trying to type login
     try: 
-        loginfield = driver.find_element(By.ID, "login")
+        loginfield = driver.find_element(By.ID, "username")
         loginfield.send_keys(username)
-        passwordfield = driver.find_element(By.ID, "passwd")
+        passwordfield = driver.find_element(By.ID, "password")
         passwordfield.send_keys(password)
-        loginbutton = driver.find_element(By.ID, "nsg-x1-logon-button")
+        loginbutton = driver.find_element(By.ID, "loginBtn")
         loginbutton.click()
         logevent("Trying to log in",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-    except TimeoutException:
+    except:
         driver.quit()
-        logevent("Cannot find login to %s" % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
+        logevent("Cannot type login on %s" % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         sys.exit()
 
     #Wait for the page to load
     try: #Check first logon failure
-        loginfailed = EC.presence_of_element_located((By.ID, "access_denied_title"))
+        xPathtoFind = "//div[@class='standaloneText label error']"
+        loginfailed = EC.presence_of_element_located((By.XPATH, xPathtoFind))
         WebDriverWait(driver, timeout).until(loginfailed)
         logevent("Failed to log on %s with %s" % (URL, username),win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         driver.quit()
         sys.exit()
     except TimeoutException:
-        sys.exit()
+        logevent("Logged in successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
 
 
 logging.info('#####################################################################################################################################')
