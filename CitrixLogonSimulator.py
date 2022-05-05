@@ -40,7 +40,8 @@ EventSource = 'Citrix.LogonSimulator'
 username = "marlene.sasseur"
 #password = os.getenv('py_pwd')
 password = 'Pssw0rd'
-URL = "https://stevenlemonier.fr"
+#URL = "https://remote.stevenlemonier.fr"
+URL = "http://stf01.homelab.local"
 ResourceToTest = "Desktop"
 ScreenshotFile = "Screenshot.bmp" #Full path is required
 TextToFind = "Yep."
@@ -52,7 +53,7 @@ LogFile = "CitrixLogonSimulator.log"
 
 #Other Variables
 Resourcefound = False
-timeout = 30
+timeout = 5
 
 #Check logging file size
 if os.path.exists(LogFile):
@@ -96,7 +97,7 @@ def logOnCitrixGateway():
         loginbutton = driver.find_element(By.ID, "nsg-x1-logon-button")
         loginbutton.click()
         logevent("Trying to log in",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-    except:
+    except TimeoutException:
         driver.quit()
         logevent("Cannot find login to %s" % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         sys.exit()
@@ -104,7 +105,7 @@ def logOnCitrixGateway():
     #Wait for the HTML5 or logon failure page to load
     try: #Check first logon failure
         loginfailed = EC.presence_of_element_located((By.ID, "access_denied_title"))
-        WebDriverWait(driver, timeout).until(loginfailed)
+        WebDriverWait(driver, 5).until(loginfailed) #lower the timeout because access denied is pretty fast to appear
         logevent("Failed to log on %s with %s" % (URL, username),win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         driver.quit()
         sys.exit()
@@ -123,13 +124,12 @@ def logOnCitrixGateway():
         html5receiverbutton = driver.find_element(By.ID, "protocolhandler-welcome-useLightVersionLink")
         html5receiverbutton.click()
         logevent("Selecting HTML5 receiver",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-    except:
+    except TimeoutException:
         driver.quit()
         logevent("Cannot select HTML5 receiver",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         sys.exit()
 
 def logonCitrixStorefront():
-    sys.exit()
     #Wait for the HTML5 page to load
     try:
         html5receiverbutton = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
@@ -145,7 +145,7 @@ def logonCitrixStorefront():
         html5receiverbutton = driver.find_element(By.ID, "protocolhandler-welcome-useLightVersionLink")
         html5receiverbutton.click()
         logevent("HTML5 receiver selected successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-    except:
+    except TimeoutException:
         driver.quit()
         logevent("Cannot select HTML5 receiver",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         sys.exit()
@@ -158,7 +158,7 @@ def logonCitrixStorefront():
         loginfield = EC.presence_of_element_located((By.ID, "protocolhandler-welcome-useLightVersionLink"))
         WebDriverWait(driver, timeout).until(loginfield)
         logevent("HTML5 receiver button was found",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-    except:
+    except TimeoutException:
         driver.quit()
         logevent("Cannot HTML5 receiver button.",win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         sys.exit()
@@ -177,7 +177,7 @@ def logonCitrixStorefront():
         loginbutton = driver.find_element(By.ID, "nsg-x1-logon-button")
         loginbutton.click()
         logevent("Trying to log in",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-    except:
+    except TimeoutException:
         driver.quit()
         logevent("Cannot find login to %s" % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         sys.exit()
@@ -201,7 +201,7 @@ logging.info('##################################################################
 try:
     httpResponse = requests.get(URL)
     logevent('%s is reachable!' % URL,win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
-except:
+except TimeoutException:
     logevent("Cannot reach %s" % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
     sys.exit()
 
@@ -231,7 +231,7 @@ except TimeoutException:
         logevent("%s is a Storefront URL." % URL,win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
         #Start log on process for Citrix Storefront
         logonCitrixStorefront()
-    except:
+    except TimeoutException:
         driver.quit()
         logevent("%s is not a Citrix Gateway or Citrix Storefront landing page." % URL,win32evtlog.EVENTLOG_ERROR_TYPE,App_Event_ID_ERROR)
         sys.exit()
