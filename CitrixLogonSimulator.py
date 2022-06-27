@@ -9,11 +9,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
 from PIL import Image
+from PIL import ImageGrab
 import sys
 import win32evtlogutil
 import win32evtlog
 import os
-import pyautogui
 import pytesseract
 import requests
 import logging
@@ -43,7 +43,7 @@ password = 'Pssw0rd'
 #URL = "https://remote.stevenlemonier.fr"
 URL = "http://stf01.homelab.local"
 ResourceToTest = "Desktop"
-ScreenshotFile = "Screenshot.bmp" #Full path is required
+ScreenshotFile = "Screenshot.png" #Full path is required
 TextToFind = "Yep."
 LogFile = "CitrixLogonSimulator.log"
 
@@ -260,7 +260,7 @@ except:
 #Waiting for app/desktop to launch
 sleep(60)
 try:
-    myScreenShot = pyautogui.screenshot()
+    myScreenShot = ImageGrab.grab()
     myScreenShot.save(ScreenshotFile)
     logevent("Took a screenshot successfully",win32evtlog.EVENTLOG_INFORMATION_TYPE,App_Event_ID_INFORMATION)
     driver.quit()
